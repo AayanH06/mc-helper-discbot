@@ -31,7 +31,10 @@ venv\Scripts\activate
 
 ### 3. Install Dependencies
 Install the required libraries:
-pip install discord.py python-dotenv mcrcon
+pip install discord.py 
+pip install python-dotenv 
+pip install mcrcon
+pip install mcstatus
 
 ### 4. Set Up Environment Variables
 Create a `.env` file in the root directory and add:
