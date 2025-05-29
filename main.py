@@ -5,6 +5,11 @@ from mcrcon import MCRcon
 from dotenv import load_dotenv
 import os
 import asyncio
+from wakeonlan import send_magic_packet
+import time
+import subprocess
+import psutil
+import requests
 
 #basic setup
 intents = discord.Intents.default()
@@ -27,6 +32,9 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 RCON_PASSWORD = os.getenv("RCON_PASSWORD")
 TRUSTED_GUILD_ID = int(os.getenv("TRUSTED_GUILD_ID") or 0)
 BOT_OWNER_ID = int(os.getenv("BOT_OWNER_ID") or 0)
+BOT_OWNER_USERNAME = str(os.getenv("BOT_OWNER_USERNAME"))
+TARGET_MAC = str(os.getenv("TARGET_MAC"))
+TOKEN = str(os.getenv("MC_LAUNCH_TOKEN"))
 
 @bot.event
 async def on_ready():
@@ -123,7 +131,11 @@ async def on_raw_reaction_add(payload):
 
         channel = await bot.fetch_channel(channel_id)
         requester = await bot.fetch_user(requester_id)
-        await channel.send(f"{requester.mention} has been whitelisted as `{username}` ✅")
+        # Only send in channel if it's a text channel or thread, otherwise DM the requester
+        if isinstance(channel, (discord.TextChannel, discord.Thread)):
+            await channel.send(f"{requester.mention} has been whitelisted as `{username}` ✅")
+        else:
+            await requester.send(f"You have been whitelisted as `{username}` ✅")
 
         print(f"[APPROVED] {username} whitelisted by owner.")
     except Exception as e:
@@ -135,7 +147,37 @@ async def on_raw_reaction_add(payload):
 async def myid(ctx):
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
 
-#@bot.command()
-#async def start(ctx):
+def is_pc_online(ip):
+    return os.system(f"ping -n 1 {ip}" if os.name == "nt" else f"ping -c 1 {ip}") == 0
+
+@bot.command()
+async def start(ctx):
+    await ctx.send("Sending Wake-on-LAN packet...")
+    send_magic_packet(TARGET_MAC)
+
+    await ctx.send("Waiting for PC to boot...")
+    for _ in range(30):  # ~90 seconds max (3s x 30)
+        if is_pc_online(MC_HOST):
+            await ctx.send("PC is online. Launching server...")
+            break
+        time.sleep(3)
+    else:
+        await ctx.send("Timeout: PC did not come online.")
+        return
+
+    try:
+        response = requests.post(
+            f"http://{MC_HOST}:5001/start-server",
+            json={"token": TOKEN},
+            timeout=10
+        )
+        if response.ok:
+            await ctx.send("Minecraft server launch triggered.")
+        else:
+            await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
+    except Exception as e:
+        await ctx.send(f"Could not contact the server: `{e}`")
+
 
 bot.run(DISCORD_TOKEN) 
+
