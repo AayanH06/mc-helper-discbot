@@ -59,10 +59,10 @@ async def update_presence():
 
 @bot.command()
 async def info(ctx):
-    server = MinecraftServer("{MC_HOST}",25565)
+    server = MinecraftServer(MC_HOST,25565)
     try:
         status = server.status()
-        embed = discord.Embed(title="{MC_HOST}", color=discord.Color.green())
+        embed = discord.Embed(title=f"{MC_HOST}", color=discord.Color.green())
         embed.add_field(name="Version", value=status.version.name, inline=True)
         embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
@@ -147,7 +147,7 @@ async def on_raw_reaction_add(payload):
 async def myid(ctx):
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
 
-def is_pc_online(ip):
+"""def is_pc_online(ip):
     return os.system(f"ping -n 1 {ip}" if os.name == "nt" else f"ping -c 1 {ip}") == 0
 
 @bot.command()
@@ -176,7 +176,7 @@ async def start(ctx):
         else:
             await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
     except Exception as e:
-        await ctx.send(f"Could not contact the server: `{e}`")
+        await ctx.send(f"Could not contact the server: `{e}`")"""
 
 
 bot.run(DISCORD_TOKEN) 
