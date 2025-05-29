@@ -70,6 +70,11 @@ async def info(ctx):
     except:
         await ctx.send("Minecraft server is offline or unreachable.")
 #\u2705
+
+def isInTrustedGuild(ctx) -> bool:
+    return ctx.guild is not None and ctx.guild.id == TRUSTED_GUILD_ID
+    
+
 @bot.command()
 async def whitelist(ctx, username: str = None):
     if username is None:
@@ -79,7 +84,7 @@ async def whitelist(ctx, username: str = None):
     owner = await bot.fetch_user(BOT_OWNER_ID)
 
     # DM the owner for confirmation
-    if not ctx.guild or ctx.guild.id != TRUSTED_GUILD_ID:
+    if not isInTrustedGuild(ctx):
         try:
             dm_msg = await owner.send(
                 f"Whitelist request for `{username}` from `{ctx.author}`.\n"
@@ -147,11 +152,56 @@ async def on_raw_reaction_add(payload):
 async def myid(ctx):
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
 
-"""def is_pc_online(ip):
+def is_pc_online(ip):
     return os.system(f"ping -n 1 {ip}" if os.name == "nt" else f"ping -c 1 {ip}") == 0
 
 @bot.command()
 async def start(ctx):
+    server = MinecraftServer(MC_HOST, MC_PORT)
+
+    if is_pc_online(MC_HOST):
+        print(f"{MC_HOST} is active, checking if server is online")
+
+        try:
+            # If status() succeeds, then request is redundant
+            server.status()
+            await ctx.send("Server is already online. No need to start a new instance.")
+            return
+        except:
+            print("Server not responding to mcstatus. Proceeding to launch...")
+
+        #checks local http server w/ token
+        try:
+            response = requests.post(
+                f"http://{MC_HOST}:5001/start-server",
+                json={"token": TOKEN},
+                timeout=10
+            )
+            if response.ok:
+                await ctx.send("Minecraft server launch triggered.")
+            else:
+                await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
+        except Exception as e:
+            await ctx.send(f"Could not contact the server starter API:\n`{e}`")
+    else:
+        print(f"{MC_HOST} is inactive, server cannot be started.")
+        await ctx.send(f"{MC_HOST} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
+
+@bot.command()
+async def stop(ctx):
+    server = MinecraftServer(MC_HOST, MC_PORT)
+    try:
+        status = server.status()
+        with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+            response = mcr.command("stop")
+        await ctx.send(f"Stopping server {MC_HOST}")
+    except:
+        print(f"{MC_HOST} is already offline.")
+        await ctx.send(f"{MC_HOST} is already offline.")
+
+"""
+@bot.command()
+async def startt(ctx):###WOL version of mc!start
     await ctx.send("Sending Wake-on-LAN packet...")
     send_magic_packet(TARGET_MAC)
 
@@ -176,7 +226,8 @@ async def start(ctx):
         else:
             await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
     except Exception as e:
-        await ctx.send(f"Could not contact the server: `{e}`")"""
+        await ctx.send(f"Could not contact the server: `{e}`")
+"""
 
 
 bot.run(DISCORD_TOKEN) 
