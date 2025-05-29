@@ -31,10 +31,10 @@ venv\Scripts\activate
 
 ### 3. Install Dependencies
 Install the required libraries:
-pip install -r requirements.txt
-
-If requirements.txt is missing, manually install:
-pip install discord.py python-dotenv mcrcon
+pip install discord.py 
+pip install python-dotenv 
+pip install mcrcon
+pip install mcstatus
 
 ### 4. Set Up Environment Variables
 Create a `.env` file in the root directory and add:
@@ -44,7 +44,6 @@ BOT_OWNER_ID=your_discord_user_id
 TRUSTED_GUILD_ID=your_trusted_guild_id
 MC_HOST=your_mc_server_ip (this can be ipv4 or custom domain)
 RCON_PASSWORD=your_rcon_password
-RCON_PORT=25575  # Default RCON port, change if different
 
 ### 5. Run the Bot
 python main.py
