@@ -61,7 +61,7 @@ async def update_presence():
             players = status.players.online
             msg = f"with {players} players on {MC_DOMAIN}"
         except:
-            msg = "Server Offline"
+            msg = "Server Offline. Try `mc!start`"
 
         await bot.change_presence(activity=discord.Game(name=msg))
         await asyncio.sleep(10)  # update every 60 seconds
@@ -128,7 +128,7 @@ async def info(ctx):
         embed.add_field(name="MOTD", value=status.description, inline=False)
         await ctx.send(embed=embed)
     except:
-        await ctx.send("Minecraft server is offline or unreachable.")
+        await ctx.send("Minecraft server is offline or unreachable. Trusted users may run `mc!start`")
 #\u2705
 
 def load_trusted_users_file():
