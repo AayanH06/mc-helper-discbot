@@ -1,15 +1,24 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Connect and deploy to Pi via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PI_HOST }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /home/pi/your-bot-folder-name
-          git pull
-          # systemctl restart your-service.service  # optional
+      - name: Write SSH private key to file
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Deploy code to Raspberry Pi
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.PI_USER }}@${{ secrets.PI_HOST }} "
+            cd /home/aayanh/mc-discbot/mc-helper-discbot &&
+            git pull &&
+            echo 'Bot pulled successfully!'
+          "
