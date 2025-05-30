@@ -34,7 +34,7 @@ BOT_OWNER_ID = int(os.getenv("BOT_OWNER_ID") or 0)
 BOT_OWNER_USERNAME = str(os.getenv("BOT_OWNER_USERNAME"))
 TARGET_MAC = str(os.getenv("TARGET_MAC"))
 TOKEN = str(os.getenv("MC_LAUNCH_TOKEN"))
-CHANNEL_ID = str(os.getenv("CHANNEL_ID"))
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
 pending_whitelist = {}
 TRUSTED_USERS = "trusted_users.json"
