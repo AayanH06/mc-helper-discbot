@@ -8,6 +8,7 @@ import asyncio
 from wakeonlan import send_magic_packet
 import requests
 import json
+import socket
 
 #basic setup
 intents = discord.Intents.default()
@@ -249,15 +250,19 @@ async def on_raw_reaction_add(payload):
 async def myid(ctx):
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
 
-def is_pc_online(ip):
-    return os.system(f"ping -n 1 {ip}" if os.name == "nt" else f"ping -c 1 {ip}") == 0
+def is_pc_online(host: str, port: int, timeout=3) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout):
+            return True
+    except:
+        return False
 
 @bot.command()
 async def start(ctx):
     if isTrusted(ctx):    
         server = MinecraftServer(MC_DOMAIN, MC_PORT)
 
-        if is_pc_online(MC_IP):
+        if is_pc_online(MC_IP, 5001):
             print(f"{MC_DOMAIN} is active, checking if server is online")
 
             try:
