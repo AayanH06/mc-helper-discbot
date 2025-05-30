@@ -1,0 +1,18 @@
+name: Debug SSH Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Write SSH private key to file
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: SSH to Pi and run echo
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.PI_USER }}@${{ secrets.PI_HOST }} "echo SSH SUCCESS"
