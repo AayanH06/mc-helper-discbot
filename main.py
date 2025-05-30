@@ -59,12 +59,12 @@ async def update_presence():
             status = server.status()
             version = status.version.name
             players = status.players.online
-            msg = f"with {players} players on {MC_DOMAIN}"
+            msg = f"with {players} person on {MC_DOMAIN}"
         except:
             msg = "Server Offline. Try `mc!start`"
 
         await bot.change_presence(activity=discord.Game(name=msg))
-        await asyncio.sleep(10)  # update every 60 seconds
+        await asyncio.sleep(60)  # update every 60 seconds
 
 async def server_status_task():
     global server_was_online
@@ -85,7 +85,7 @@ async def server_status_task():
                 await channel.send(f"`{MC_DOMAIN}` just went offline.")
             server_was_online = False
 
-        await asyncio.sleep(10)  # check every 10 seconds
+        await asyncio.sleep(60)  # check every 60 seconds
 
 """async def auto_shutdown_check():
     global last_seen_active
@@ -281,7 +281,7 @@ async def start(ctx):
                     timeout=10
                 )
                 if response.ok:
-                    await ctx.send("Minecraft server launch triggered.")
+                    await ctx.send("Minecraft server launch triggered. Please wait ~2 minutes.")
                 else:
                     await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
             except Exception as e:
