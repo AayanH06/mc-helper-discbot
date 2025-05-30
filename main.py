@@ -301,13 +301,13 @@ async def stop(ctx):
     else:
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
-@bot.command()
+"""@bot.command()
 async def help(ctx):
         embed = discord.Embed(title="Commands", color=discord.Color.green())
         embed.add_field(name="Version", value=status.version.name, inline=True)
         embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed)"""
 
 
 """
