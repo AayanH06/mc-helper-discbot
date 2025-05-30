@@ -39,6 +39,7 @@ TRUSTED_USERS = "trusted_users.json"
 adminIDs = [BOT_OWNER_ID]
 
 server_was_online = False
+last_seen_active = None
 
 @bot.event
 async def on_ready():
@@ -46,6 +47,7 @@ async def on_ready():
     print("--------------------------------------------------")
     bot.loop.create_task(update_presence())
     bot.loop.create_task(server_status_task())
+    bot.loop.create_task(auto_shutdown_check())
 
 async def update_presence():
     await bot.wait_until_ready()
@@ -82,6 +84,36 @@ async def server_status_task():
             server_was_online = False
 
         await asyncio.sleep(10)  # check every 10 seconds
+
+async def auto_shutdown_check():
+    global last_seen_active
+    server = MinecraftServer(MC_HOST,25565)
+
+    while True:
+        try:
+            status = server.status()
+            player_count = status.players.online
+
+            if player_count > 0:
+                last_seen_active = asyncio.get_event_loop().time()
+                print(f"Players online: {player_count}. Resetting timer.")
+            else:
+                if last_seen_active is None:
+                    last_seen_active = asyncio.get_event_loop().time()
+
+                inactive_time = asyncio.get_event_loop().time() - last_seen_active
+                print(f"No players. Inactive for {inactive_time:.0f} seconds.")
+
+                if inactive_time >= 3600:
+                    print("Server inactive for 1 hour. Shutting down.")
+                    with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+                        response = mcr.command("stop")
+                    break  # optional: exit loop if server shuts down
+
+        except Exception as e:
+            print(f"Error checking server status: {e}")
+
+        await asyncio.sleep(60)
 
 @bot.command()
 async def info(ctx):
@@ -269,13 +301,13 @@ async def stop(ctx):
     else:
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
-"""@bot.command()
+@bot.command()
 async def help(ctx):
         embed = discord.Embed(title="Commands", color=discord.Color.green())
         embed.add_field(name="Version", value=status.version.name, inline=True)
         embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
-        await ctx.send(embed=embed)"""
+        await ctx.send(embed=embed)
 
 
 """
