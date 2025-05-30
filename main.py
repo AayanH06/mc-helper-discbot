@@ -47,7 +47,7 @@ async def on_ready():
     print("--------------------------------------------------")
     bot.loop.create_task(update_presence())
     bot.loop.create_task(server_status_task())
-    bot.loop.create_task(auto_shutdown_check())
+    #bot.loop.create_task(auto_shutdown_check())
 
 async def update_presence():
     await bot.wait_until_ready()
@@ -85,7 +85,7 @@ async def server_status_task():
 
         await asyncio.sleep(10)  # check every 10 seconds
 
-async def auto_shutdown_check():
+"""async def auto_shutdown_check():
     global last_seen_active
     server = MinecraftServer(MC_HOST,25565)
 
@@ -113,7 +113,7 @@ async def auto_shutdown_check():
         except Exception as e:
             print(f"Error checking server status: {e}")
 
-        await asyncio.sleep(60)
+        await asyncio.sleep(60)"""
 
 @bot.command()
 async def info(ctx):
