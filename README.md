@@ -75,7 +75,7 @@ Use commands like:
 mc!whitelist your_mc_username
 
 The bot will DM the owner and await approval via reaction.
-
+  
 ## Notes
 
 - Ensure RCON is enabled in your `server.properties`:

@@ -24,7 +24,8 @@ RCON_PORT = 25575
 #lol u thought u would see these
 #didnt want these to be public 
 load_dotenv()
-MC_HOST = os.getenv("MC_HOST")
+MC_DOMAIN = os.getenv("MC_DOMAIN")
+MC_IP = os.getenv("SERVER_IP")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 RCON_PASSWORD = os.getenv("RCON_PASSWORD")
 TRUSTED_GUILD_ID = int(os.getenv("TRUSTED_GUILD_ID") or 0)
@@ -53,11 +54,11 @@ async def update_presence():
     await bot.wait_until_ready()
     while not bot.is_closed():
         try:
-            server = MinecraftServer(MC_HOST, MC_PORT)
+            server = MinecraftServer(MC_DOMAIN, MC_PORT)
             status = server.status()
             version = status.version.name
             players = status.players.online
-            msg = f"with {players} players on {MC_HOST}"
+            msg = f"with {players} players on {MC_DOMAIN}"
         except:
             msg = "Server Offline"
 
@@ -75,19 +76,19 @@ async def server_status_task():
             status = server.status()
 
             if not server_was_online:
-                await channel.send(f"`{MC_HOST}`is now online!")
+                await channel.send(f"`{MC_DOMAIN}`is now online!")
                 server_was_online = True
 
         except Exception:
             if server_was_online:
-                await channel.send(f"`{MC_HOST}` just went offline.")
+                await channel.send(f"`{MC_DOMAIN}` just went offline.")
             server_was_online = False
 
         await asyncio.sleep(10)  # check every 10 seconds
 
 async def auto_shutdown_check():
     global last_seen_active
-    server = MinecraftServer(MC_HOST,25565)
+    server = MinecraftServer(MC_DOMAIN,25565)
 
     while True:
         try:
@@ -106,7 +107,7 @@ async def auto_shutdown_check():
 
                 if inactive_time >= 3600:
                     print("Server inactive for 1 hour. Shutting down.")
-                    with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+                    with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
                         response = mcr.command("stop")
                     break  # optional: exit loop if server shuts down
 
@@ -117,10 +118,10 @@ async def auto_shutdown_check():
 
 @bot.command()
 async def info(ctx):
-    server = MinecraftServer(MC_HOST,25565)
+    server = MinecraftServer(MC_DOMAIN,25565)
     try:
         status = server.status()
-        embed = discord.Embed(title=f"{MC_HOST}", color=discord.Color.green())
+        embed = discord.Embed(title=f"{MC_DOMAIN}", color=discord.Color.green())
         embed.add_field(name="Version", value=status.version.name, inline=True)
         embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
@@ -201,7 +202,7 @@ async def whitelist(ctx, username: str = None):
     # you are a trusted user (member of trusted guild or manually approved using mc!trust)
     try:
         print("PLEASE WORK") #i put this in for debugging but im gonna keep it b/c it's silly
-        with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+        with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
             response = mcr.command(f"whitelist add {username}")
         await ctx.send(f"`{username}` has been whitelisted.")
         await owner.send(f"`{username}` has been whitelisted.")
@@ -224,7 +225,7 @@ async def on_raw_reaction_add(payload):
     requester_id = entry["requester_id"]
 
     try:
-        with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+        with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
             mcr.command(f"whitelist add {username}")
 
         user = await bot.fetch_user(payload.user_id)
@@ -254,10 +255,10 @@ def is_pc_online(ip):
 @bot.command()
 async def start(ctx):
     if isTrusted(ctx):    
-        server = MinecraftServer(MC_HOST, MC_PORT)
+        server = MinecraftServer(MC_DOMAIN, MC_PORT)
 
-        if is_pc_online(MC_HOST):
-            print(f"{MC_HOST} is active, checking if server is online")
+        if is_pc_online(MC_IP):
+            print(f"{MC_DOMAIN} is active, checking if server is online")
 
             try:
                 # If status() succeeds, then request is redundant
@@ -270,7 +271,7 @@ async def start(ctx):
             #checks local http server w/ token
             try:
                 response = requests.post(
-                    f"http://{MC_HOST}:5001/start-server",
+                    f"http://{MC_IP}:5001/start-server",
                     json={"token": TOKEN},
                     timeout=10
                 )
@@ -281,23 +282,23 @@ async def start(ctx):
             except Exception as e:
                 await ctx.send(f"Could not contact the server starter API:\n`{e}`")
         else:
-            print(f"{MC_HOST} is inactive, server cannot be started.")
-            await ctx.send(f"{MC_HOST} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
+            print(f"{MC_DOMAIN} is inactive, server cannot be started.")
+            await ctx.send(f"{MC_DOMAIN} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
     else:
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
 @bot.command()
 async def stop(ctx):
     if isTrusted(ctx):    
-        server = MinecraftServer(MC_HOST, MC_PORT)
+        server = MinecraftServer(MC_DOMAIN, MC_PORT)
         try:
             status = server.status()
-            with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+            with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
                 response = mcr.command("stop")
-            await ctx.send(f"Stopping server {MC_HOST}")
+            await ctx.send(f"Stopping server {MC_DOMAIN}")
         except:
-            print(f"{MC_HOST} is already offline.")
-            await ctx.send(f"{MC_HOST} is already offline.")
+            print(f"{MC_DOMAIN} is already offline.")
+            await ctx.send(f"{MC_DOMAIN} is already offline.")
     else:
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
@@ -318,7 +319,7 @@ async def startt(ctx):###WOL version of mc!start
 
     await ctx.send("Waiting for PC to boot...")
     for _ in range(30):  # ~90 seconds max (3s x 30)
-        if is_pc_online(MC_HOST):
+        if is_pc_online(MC_DOMAIN):
             await ctx.send("PC is online. Launching server...")
             break
         time.sleep(3)
@@ -328,7 +329,7 @@ async def startt(ctx):###WOL version of mc!start
 
     try:
         response = requests.post(
-            f"http://{MC_HOST}:5001/start-server",
+            f"http://{MC_DOMAIN}:5001/start-server",
             json={"token": TOKEN},
             timeout=10
         )
