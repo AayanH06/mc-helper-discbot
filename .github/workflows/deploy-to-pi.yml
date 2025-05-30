@@ -8,15 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Connect and deploy to Pi via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PI_HOST }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /home/pi/your-bot-folder-name
-          git pull
-          # systemctl restart your-service.service  # optional
+      - name: Debug SSH Key Auth
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+          ssh -vvv -o StrictHostKeyChecking=no -i key.pem ${{ secrets.PI_USER }}@${{ secrets.PI_HOST }} "echo SUCCESS"
+
