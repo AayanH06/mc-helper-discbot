@@ -1,17 +1,18 @@
-name: Deploy to Raspberry Pi
+name: Debug SSH Connection
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  test-ssh:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Debug SSH Key Auth
+      - name: Write SSH private key to file
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
-          ssh -vvv -o StrictHostKeyChecking=no -i key.pem ${{ secrets.PI_USER }}@${{ secrets.PI_HOST }} "echo SUCCESS"
 
+      - name: SSH to Pi and run echo
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.PI_USER }}@${{ secrets.PI_HOST }} "echo SSH SUCCESS"
