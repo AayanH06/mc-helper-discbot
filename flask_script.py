@@ -9,20 +9,32 @@ app = Flask(__name__)
 SERVER_DIR = str(os.getenv("SERVER_DIR"))
 TOKEN = str(os.getenv("MC_LAUNCH_TOKEN"))
 
+print("SERVER_DIR =", SERVER_DIR)
+print("TOKEN =", TOKEN)
+
 @app.route('/start-server', methods=['POST'])
 def start_server():
-    if request.json.get("token") != TOKEN:
+    print("Received /start-server POST")
+
+    data = request.json
+    print("Request JSON:", data)
+
+    if data.get("token") != TOKEN:
+        print("Invalid token:", data.get("token"))
         return "Unauthorized", 403
 
     try:
+        print(f"Launching server from: {SERVER_DIR}")
         subprocess.Popen(
-            ["java", "-Xmx4G", "-Xms2G", "-jar", "server.jar", "nogui"],
+            ["cmd.exe", "/c", "run.bat"],
             cwd=SERVER_DIR,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            creationflags=subprocess.CREATE_NEW_CONSOLE
         )
+        print("Server process launched.")
         return "Server started", 200
+
     except Exception as e:
+        print(f"Error launching server: {e}")
         return f"Failed to start server: {e}", 500
 
 if __name__ == "__main__":

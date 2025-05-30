@@ -6,10 +6,8 @@ from dotenv import load_dotenv
 import os
 import asyncio
 from wakeonlan import send_magic_packet
-import time
-import subprocess
-import psutil
 import requests
+import json
 
 #basic setup
 intents = discord.Intents.default()
@@ -17,9 +15,8 @@ intents.message_content = True
 intents.reactions = True
 intents.dm_messages = True
 intents.dm_reactions = True
+intents.members = True
 bot = commands.Bot(command_prefix = 'mc!', intents = intents)
-
-pending_whitelist = {}
 
 #config details
 MC_PORT = 25565
@@ -35,12 +32,20 @@ BOT_OWNER_ID = int(os.getenv("BOT_OWNER_ID") or 0)
 BOT_OWNER_USERNAME = str(os.getenv("BOT_OWNER_USERNAME"))
 TARGET_MAC = str(os.getenv("TARGET_MAC"))
 TOKEN = str(os.getenv("MC_LAUNCH_TOKEN"))
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+
+pending_whitelist = {}
+TRUSTED_USERS = "trusted_users.json"
+adminIDs = [BOT_OWNER_ID]
+
+server_was_online = False
 
 @bot.event
 async def on_ready():
     print("first we mine... then we craft... let's minecraft!")
     print("--------------------------------------------------")
     bot.loop.create_task(update_presence())
+    bot.loop.create_task(server_status_task())
 
 async def update_presence():
     await bot.wait_until_ready()
@@ -55,7 +60,28 @@ async def update_presence():
             msg = "Server Offline"
 
         await bot.change_presence(activity=discord.Game(name=msg))
-        await asyncio.sleep(60)  # update every 60 seconds
+        await asyncio.sleep(10)  # update every 60 seconds
+
+async def server_status_task():
+    global server_was_online
+    await bot.wait_until_ready()
+    channel = bot.get_channel(CHANNEL_ID)
+
+    while not bot.is_closed():
+        try:
+            server = MinecraftServer("mc.aayan.us", 25565)
+            status = server.status()
+
+            if not server_was_online:
+                await channel.send(f"`{MC_HOST}`is now online!")
+                server_was_online = True
+
+        except Exception:
+            if server_was_online:
+                await channel.send(f"`{MC_HOST}` just went offline.")
+            server_was_online = False
+
+        await asyncio.sleep(10)  # check every 10 seconds
 
 @bot.command()
 async def info(ctx):
@@ -71,9 +97,47 @@ async def info(ctx):
         await ctx.send("Minecraft server is offline or unreachable.")
 #\u2705
 
-def isInTrustedGuild(ctx) -> bool:
-    return ctx.guild is not None and ctx.guild.id == TRUSTED_GUILD_ID
-    
+def load_trusted_users_file():
+    try:
+        with open(TRUSTED_USERS, 'r') as trusted_file:
+            data = json.load(trusted_file)
+            return set(data.get("trusted_users", []))
+    except FileNotFoundError:
+        return set()
+
+def isInGuild(user_id: int, guild_id: int) -> bool:
+    guild = bot.get_guild(guild_id)
+    if not guild:
+        return False
+    else:
+        return guild.get_member(user_id) is not None
+
+def isTrusted(ctx) -> bool:
+    return isInGuild(ctx.author.id, TRUSTED_GUILD_ID) or ctx.author.id in load_trusted_users_file()
+
+@bot.command()
+@commands.is_owner()
+async def trust(ctx, user: discord.User):
+        trusted = load_trusted_users_file()
+        if user.id not in trusted:
+            trusted.add(user.id)
+            with open(TRUSTED_USERS, 'w') as trusted_file:
+                json.dump({"trusted_users": list(trusted)}, trusted_file, indent=2)
+            await ctx.send(f"{user.name} is now a trusted user.")
+        else:
+            await ctx.send(f"{user.name} is already a trusted user.")
+
+@bot.command()
+@commands.is_owner()
+async def untrust(ctx, user: discord.User):
+    trusted = load_trusted_users_file()
+    if user.id in trusted:
+        trusted.remove(user.id)
+        with open(TRUSTED_USERS, "w") as f:
+            json.dump({"trusted_users": list(trusted)}, f, indent=2)
+        await ctx.send(f"{user.name} is no longer a trusted user.")
+    else:
+        await ctx.send(f"{user.name} was not a trusted user.")
 
 @bot.command()
 async def whitelist(ctx, username: str = None):
@@ -84,7 +148,7 @@ async def whitelist(ctx, username: str = None):
     owner = await bot.fetch_user(BOT_OWNER_ID)
 
     # DM the owner for confirmation
-    if not isInTrustedGuild(ctx):
+    if not isTrusted(ctx):
         try:
             dm_msg = await owner.send(
                 f"Whitelist request for `{username}` from `{ctx.author}`.\n"
@@ -102,9 +166,9 @@ async def whitelist(ctx, username: str = None):
             await ctx.send("Could not DM the bot owner. Approval failed.")
             return
 
-    # you are from approved server
+    # you are a trusted user (member of trusted guild or manually approved using mc!trust)
     try:
-        print("PLEASE WORK")
+        print("PLEASE WORK") #i put this in for debugging but im gonna keep it b/c it's silly
         with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
             response = mcr.command(f"whitelist add {username}")
         await ctx.send(f"`{username}` has been whitelisted.")
@@ -157,47 +221,62 @@ def is_pc_online(ip):
 
 @bot.command()
 async def start(ctx):
-    server = MinecraftServer(MC_HOST, MC_PORT)
+    if isTrusted(ctx):    
+        server = MinecraftServer(MC_HOST, MC_PORT)
 
-    if is_pc_online(MC_HOST):
-        print(f"{MC_HOST} is active, checking if server is online")
+        if is_pc_online(MC_HOST):
+            print(f"{MC_HOST} is active, checking if server is online")
 
-        try:
-            # If status() succeeds, then request is redundant
-            server.status()
-            await ctx.send("Server is already online. No need to start a new instance.")
-            return
-        except:
-            print("Server not responding to mcstatus. Proceeding to launch...")
+            try:
+                # If status() succeeds, then request is redundant
+                server.status()
+                await ctx.send("Server is already online. No need to start a new instance.")
+                return
+            except:
+                print("Server not responding to mcstatus. Proceeding to launch...")
 
-        #checks local http server w/ token
-        try:
-            response = requests.post(
-                f"http://{MC_HOST}:5001/start-server",
-                json={"token": TOKEN},
-                timeout=10
-            )
-            if response.ok:
-                await ctx.send("Minecraft server launch triggered.")
-            else:
-                await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
-        except Exception as e:
-            await ctx.send(f"Could not contact the server starter API:\n`{e}`")
+            #checks local http server w/ token
+            try:
+                response = requests.post(
+                    f"http://{MC_HOST}:5001/start-server",
+                    json={"token": TOKEN},
+                    timeout=10
+                )
+                if response.ok:
+                    await ctx.send("Minecraft server launch triggered.")
+                else:
+                    await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
+            except Exception as e:
+                await ctx.send(f"Could not contact the server starter API:\n`{e}`")
+        else:
+            print(f"{MC_HOST} is inactive, server cannot be started.")
+            await ctx.send(f"{MC_HOST} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
     else:
-        print(f"{MC_HOST} is inactive, server cannot be started.")
-        await ctx.send(f"{MC_HOST} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
+        await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
 @bot.command()
 async def stop(ctx):
-    server = MinecraftServer(MC_HOST, MC_PORT)
-    try:
-        status = server.status()
-        with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
-            response = mcr.command("stop")
-        await ctx.send(f"Stopping server {MC_HOST}")
-    except:
-        print(f"{MC_HOST} is already offline.")
-        await ctx.send(f"{MC_HOST} is already offline.")
+    if isTrusted(ctx):    
+        server = MinecraftServer(MC_HOST, MC_PORT)
+        try:
+            status = server.status()
+            with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+                response = mcr.command("stop")
+            await ctx.send(f"Stopping server {MC_HOST}")
+        except:
+            print(f"{MC_HOST} is already offline.")
+            await ctx.send(f"{MC_HOST} is already offline.")
+    else:
+        await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
+
+"""@bot.command()
+async def help(ctx):
+        embed = discord.Embed(title="Commands", color=discord.Color.green())
+        embed.add_field(name="Version", value=status.version.name, inline=True)
+        embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
+        embed.add_field(name="MOTD", value=status.description, inline=False)
+        await ctx.send(embed=embed)"""
+
 
 """
 @bot.command()
