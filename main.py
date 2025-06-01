@@ -70,7 +70,6 @@ async def update_presence():
 async def server_status_task():
     global server_was_online
     await bot.wait_until_ready()
-    channel = bot.get_channel(CHANNEL_ID)
 
     while not bot.is_closed():
         try:
@@ -78,12 +77,43 @@ async def server_status_task():
             status = server.status()
 
             if not server_was_online:
-                await channel.send(f"`{MC_DOMAIN}`is now online!")
+                try:
+                    with open(START_STOP, 'r') as f:
+                        data = json.load(f)
+                        user_ids = data.get("wants_dm",[])
+                except FileNotFoundError:
+                    print("START_STOP file not found.")
+                    user_ids = []
+                
+                for user_id in user_ids:
+                    try:
+                        user = await bot.fetch_user(user_id)
+                        embed = discord.Embed(
+                            title="Server Status",
+                            description=f"{MC_DOMAIN} is now online!"
+                        )
+                        embed.set_footer(text="Use `mc!doDM` to toggle off.")
+                        await user.send(embed=embed)
+                    except Exception as e:
+                        print("Failed to notifed list that server has started.")
+                print("Notified list that server has started.")
+
                 server_was_online = True
 
         except Exception:
             if server_was_online:
-                await channel.send(f"`{MC_DOMAIN}` just went offline.")
+                for user_id in user_ids:
+                    try:
+                        user = await bot.fetch_user(user_id)
+                        embed = discord.Embed(
+                            title="Server Status",
+                            description=f"{MC_DOMAIN} is now offline."
+                        )
+                        embed.set_footer(text="Use `mc!doDM` to toggle off.")
+                        await user.send(embed=embed)
+                    except Exception as e:
+                        print("Failed to notifed list that server has stopped.")
+                print("Notified list that server has stopped.")
             server_was_online = False
 
         await asyncio.sleep(60)  # check every 60 seconds
@@ -318,7 +348,7 @@ def load_startstop_file():
     except FileNotFoundError:
         return set()
 
-@bot.command()
+@bot.command(aliases=["dodm","dm", "toggleDM", "notify"])
 async def doDM(ctx):
     print(f"{ctx.author} ran: doDM")
     user_id = ctx.author.id
