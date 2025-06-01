@@ -98,18 +98,20 @@ async def auto_shutdown_check():
             player_count = status.players.online
 
             if player_count > 0:
-                last_seen_active = asyncio.get_event_loop().time()
+                last_seen_active = asyncio.get_running_loop().time()
                 print(f"Players online: {player_count}. Resetting timer.")
             else:
                 if last_seen_active is None:
-                    last_seen_active = asyncio.get_event_loop().time()
+                    last_seen_active = asyncio.get_running_loop().time()
 
-                inactive_time = asyncio.get_event_loop().time() - last_seen_active
+                inactive_time = asyncio.get_running_loop().time() - last_seen_active
                 print(f"No players. Inactive for {inactive_time:.0f} seconds.")
 
                 if inactive_time >= 3600:
                     print("Server inactive for 1 hour. Shutting down.")
                     with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
+                        mcr.command(f"say Server is detected as inactive for 1 hour. run mc!start and contact @{BOT_OWNER_USERNAME} if this is a mistake. Shutting down in 15 seconds.")
+                        await asyncio.sleep(15)
                         response = mcr.command("stop")
                     break  # optional: exit loop if server shuts down
 
