@@ -89,18 +89,19 @@ async def server_status_task():
 
     while not bot.is_closed():
         try:
+            # Always load user_ids at the beginning of the loop
+            try:
+                with open(START_STOP, 'r') as f:
+                    data = json.load(f)
+                    user_ids = data.get("wants_dm", [])
+            except FileNotFoundError:
+                print("START_STOP file not found.")
+                user_ids = []
+
             server = MinecraftServer("mc.aayan.us", 25565)
             status = server.status()
 
             if not server_was_online:
-                try:
-                    with open(START_STOP, 'r') as f:
-                        data = json.load(f)
-                        user_ids = data.get("wants_dm",[])
-                except FileNotFoundError:
-                    print("START_STOP file not found.")
-                    user_ids = []
-                
                 for user_id in user_ids:
                     try:
                         user = await bot.fetch_user(user_id)
@@ -112,14 +113,13 @@ async def server_status_task():
                         embed.set_footer(text="Use mc!doDM to toggle off.")
                         await user.send(embed=embed)
                     except Exception as e:
-                        print("Failed to notifed list that server has started.")
+                        print(f"Failed to notify {user_id} that server started: {e}")
                 print("Notified list that server has started.")
-
                 server_was_online = True
 
         except Exception:
             if server_was_online:
-                for user_id in user_ids:
+                for user_id in user_ids:  # Now this is always defined
                     try:
                         user = await bot.fetch_user(user_id)
                         embed = discord.Embed(
@@ -130,9 +130,10 @@ async def server_status_task():
                         embed.set_footer(text="Use mc!doDM to toggle off.")
                         await user.send(embed=embed)
                     except Exception as e:
-                        print("Failed to notifed list that server has stopped.")
+                        print(f"Failed to notify {user_id} that server stopped: {e}")
                 print("Notified list that server has stopped.")
             server_was_online = False
+
 
         await asyncio.sleep(60)  # check every 60 seconds
 
