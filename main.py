@@ -38,7 +38,7 @@ CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
 pending_whitelist = {}
 TRUSTED_USERS = "trusted_users.json"
-START_STOP = "wants_startstop_message.json"
+START_STOP = "wants_dm.json"
 adminIDs = [BOT_OWNER_ID]
 
 server_was_online = False
@@ -312,18 +312,28 @@ def load_startstop_file():
     try:
         with open(START_STOP, 'r') as start_stop:
             data = json.load(start_stop)
-            return set(data.get("wants_startstop_message", []))
+            return set(data.get("wants_dm", []))
     except FileNotFoundError:
         return set()
 
-"""@bot.command()
+@bot.command()
+@commands.is_owner()
 async def doDM(ctx):
+    print(f"{ctx.author} ran: doDM")
     user_id = ctx.author.id
     wants_startstop = load_startstop_file()
-        if user_id not in wants_startstop:
-            wants_startstop.add(user.id)
-            with open(TRUSTED_USERS, 'w') as trusted_file:
-                json.dump({"trusted_users": list(trusted)}, trusted_file, indent=2)"""
+    if user_id not in wants_startstop:
+        wants_startstop.add(user_id)
+        with open(START_STOP, 'w') as f:
+            json.dump({"wants_dm": list(wants_startstop)}, f, indent=2)
+            print(f"{ctx.author} has been added to the DM-list.")
+            ctx.send("You have been added to the DM-list. Re-run command to toggle off.")
+    else:
+        wants_startstop.remove(user_id)
+        with open(START_STOP, 'w') as f:
+            json.dump({"wants_dm": list(wants_startstop)}, f, indent=2)
+            print(f"{ctx.author} has been added to the DM-list.")
+            ctx.send("You have been added to the DM-list. Re-run command to toggle off.")
 
 
 """@bot.command()
