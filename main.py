@@ -460,39 +460,5 @@ async def sudo(ctx, *, command:str):
         print("Sudo failed: server offline")
         await ctx.send("Sudo failed: server offline")
 
-
-
-
-"""
-@bot.command()
-async def startt(ctx):###WOL version of mc!start
-    await ctx.send("Sending Wake-on-LAN packet...")
-    send_magic_packet(TARGET_MAC)
-
-    await ctx.send("Waiting for PC to boot...")
-    for _ in range(30):  # ~90 seconds max (3s x 30)
-        if is_pc_online(MC_DOMAIN):
-            await ctx.send("PC is online. Launching server...")
-            break
-        time.sleep(3)
-    else:
-        await ctx.send("Timeout: PC did not come online.")
-        return
-
-    try:
-        response = requests.post(
-            f"http://{MC_DOMAIN}:5001/start-server",
-            json={"token": TOKEN},
-            timeout=10
-        )
-        if response.ok:
-            await ctx.send("Minecraft server launch triggered.")
-        else:
-            await ctx.send(f"Launch failed: {response.status_code} - {response.text}")
-    except Exception as e:
-        await ctx.send(f"Could not contact the server: `{e}`")
-"""
-
-
 bot.run(DISCORD_TOKEN) 
 
