@@ -49,6 +49,21 @@ last_seen_active = None
 async def on_ready():
     print("first we mine... then we craft... let's minecraft!")
     print("--------------------------------------------------")
+
+    try:
+        owner = await bot.fetch_user(BOT_OWNER_ID)
+        await owner.send("The bot has been restarted and is now online.")
+    except Exception as e:
+        print(f"Failed to DM bot owner: {e}")
+
+    global server_was_online
+    try:
+        server = MinecraftServer(MC_DOMAIN, MC_PORT)
+        server.status()
+        server_was_online = True
+    except:
+        server_was_online = False
+
     bot.loop.create_task(update_presence())
     bot.loop.create_task(server_status_task())
     bot.loop.create_task(auto_shutdown_check())
@@ -428,7 +443,11 @@ async def help(ctx):
 
 @bot.command(name='sudo',help='ADMIN ONLY: accesses RCON')
 @commands.is_owner()
-async def sudo(ctx,command:str):
+async def sudo(ctx, *, command:str):
+    if not command.strip():
+        await ctx.send("RCON command cannot be empty.")
+        return
+    
     print(f"{ctx.author} ran: sudo {command}")
     server = MinecraftServer(MC_DOMAIN, MC_PORT)
 
