@@ -90,10 +90,10 @@ async def server_status_task():
                         user = await bot.fetch_user(user_id)
                         embed = discord.Embed(
                             title="Server Status",
-                            description=f"{MC_DOMAIN} is now online!",
+                            description=f"`{MC_DOMAIN}` is now online!",
                             color=discord.Color.green()
                         )
-                        embed.set_footer(text="Use `mc!doDM` to toggle off.")
+                        embed.set_footer(text="Use mc!doDM to toggle off.")
                         await user.send(embed=embed)
                     except Exception as e:
                         print("Failed to notifed list that server has started.")
@@ -108,10 +108,10 @@ async def server_status_task():
                         user = await bot.fetch_user(user_id)
                         embed = discord.Embed(
                             title="Server Status",
-                            description=f"{MC_DOMAIN} is now offline.",
+                            description=f"`{MC_DOMAIN}` is now offline.",
                             color=discord.Color.green()
                         )
-                        embed.set_footer(text="Use `mc!doDM` to toggle off.")
+                        embed.set_footer(text="Use mc!doDM to toggle off.")
                         await user.send(embed=embed)
                     except Exception as e:
                         print("Failed to notifed list that server has stopped.")
@@ -154,6 +154,7 @@ async def auto_shutdown_check():
 
 @bot.command()
 async def info(ctx):
+    print(f"{ctx.author} ran: info")
     server = MinecraftServer(MC_DOMAIN,25565)
 
     image = discord.File("server-icon.png", filename = "server-icon.png")
@@ -173,14 +174,15 @@ async def info(ctx):
         row = []
         if players:
            for i, player in enumerate(players, 1):
-               row.append(player.name)
+               avatar_url = f"https://minotar.net/avatar/{player.name}/64"
+               row.append(f"[{player.name}]({avatar_url})")
                if i % 3 == 0 or i == len(players):
-                   embed.add_field(name="u/u200b", value=" | ".join(row), inline=False)
+                   embed.add_field(name="\u200b", value=" | ".join(row), inline=False)
                    row = []
         else:
             embed.add_field(name="No players online", value="Invite your friends!", inline=False)
 
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, file=image)
     except:
         await ctx.send("Minecraft server is offline or unreachable. Trusted users may run `mc!start`")
 #\u2705
@@ -206,6 +208,7 @@ def isTrusted(ctx) -> bool:
 @bot.command()
 @commands.is_owner()
 async def trust(ctx, user: discord.User):
+        print(f"{ctx.author} ran: trust")
         trusted = load_trusted_users_file()
         if user.id not in trusted:
             trusted.add(user.id)
@@ -218,6 +221,7 @@ async def trust(ctx, user: discord.User):
 @bot.command()
 @commands.is_owner()
 async def untrust(ctx, user: discord.User):
+    print(f"{ctx.author} ran: untrust")
     trusted = load_trusted_users_file()
     if user.id in trusted:
         trusted.remove(user.id)
@@ -229,10 +233,11 @@ async def untrust(ctx, user: discord.User):
 
 @bot.command()
 async def whitelist(ctx, username: str = None):
+    #add in 1 whitelist per user, store discord ID and IGN together
+    print(f"{ctx.author} ran: whitelist")
     if username is None:
         await ctx.send("Please enter your in-game name.")
         return
-
     owner = await bot.fetch_user(BOT_OWNER_ID)
 
     # DM the owner for confirmation
@@ -302,6 +307,7 @@ async def on_raw_reaction_add(payload):
 
 @bot.command()
 async def myid(ctx):
+    print(f"{ctx.author} ran: myid")
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
 
 def is_pc_online(host: str, port: int, timeout=3) -> bool:
@@ -313,7 +319,9 @@ def is_pc_online(host: str, port: int, timeout=3) -> bool:
 
 @bot.command()
 async def start(ctx):
-    if isTrusted(ctx):    
+    
+    if isTrusted(ctx):
+        print(f"{ctx.author} ran: start")    
         server = MinecraftServer(MC_DOMAIN, MC_PORT)
 
         if is_pc_online(MC_IP, 5001):
@@ -344,13 +352,16 @@ async def start(ctx):
             print(f"{MC_DOMAIN} is inactive, server cannot be started.")
             await ctx.send(f"{MC_DOMAIN} appears offline and cannot be started. Contact @{BOT_OWNER_USERNAME}.")
     else:
+        print(f"{ctx.author} ran: start but is not authorized.") 
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
 @bot.command()
 async def stop(ctx):
+    
     if isTrusted(ctx):    
         server = MinecraftServer(MC_DOMAIN, MC_PORT)
         try:
+            print(f"{ctx.author} ran: stop")
             status = server.status()
             with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
                 response = mcr.command("stop")
@@ -359,6 +370,7 @@ async def stop(ctx):
             print(f"{MC_DOMAIN} is already offline.")
             await ctx.send(f"{MC_DOMAIN} is already offline.")
     else:
+        print(f"{ctx.author} ran: stop but is not authorized.")
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
 def load_startstop_file():
