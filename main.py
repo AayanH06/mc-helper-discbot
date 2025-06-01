@@ -52,7 +52,7 @@ async def on_ready():
 
     try:
         owner = await bot.fetch_user(BOT_OWNER_ID)
-        await owner.send("The bot has been restarted and is now online.")
+        await owner.send("The bot has been restarted and is now up to date.")
     except Exception as e:
         print(f"Failed to DM bot owner: {e}")
 
