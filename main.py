@@ -18,6 +18,7 @@ intents.dm_messages = True
 intents.dm_reactions = True
 intents.members = True
 bot = commands.Bot(command_prefix = 'mc!', intents = intents)
+bot.remove_command("help")
 
 #config details
 MC_PORT = 25565
@@ -211,7 +212,7 @@ def isInGuild(user_id: int, guild_id: int) -> bool:
 def isTrusted(ctx) -> bool:
     return isInGuild(ctx.author.id, TRUSTED_GUILD_ID) or ctx.author.id in load_trusted_users_file()
 
-@bot.command(help='Trusts a user to run commands such as `mc!start` or `mc!stop`. Removes admin verification of whitelist requests.')
+@bot.command(help='ADMIN ONLY: Trusts a user to run commands such as `mc!start` or `mc!stop`. Removes admin verification of whitelist requests.')
 @commands.is_owner()
 async def trust(ctx, user: discord.User):
         print(f"{ctx.author} ran: trust")
@@ -224,7 +225,7 @@ async def trust(ctx, user: discord.User):
         else:
             await ctx.send(f"{user.name} is already a trusted user.")
 
-@bot.command(help='Untrusts a user from the above.')
+@bot.command(help='ADMIN ONLY: Untrusts a user from the above.')
 @commands.is_owner()
 async def untrust(ctx, user: discord.User):
     print(f"{ctx.author} ran: untrust")
@@ -239,7 +240,7 @@ async def untrust(ctx, user: discord.User):
 
 @bot.command(help='Whitelists user, limited to one IGN per person.')
 async def whitelist(ctx, username: str = None):
-    #add in 1 whitelist per user, store discord ID and IGN together
+    #must add in 1 whitelist per user, store discord ID and IGN together
     print(f"{ctx.author} ran: whitelist")
     if username is None:
         await ctx.send("Please enter your in-game name.")
@@ -424,6 +425,24 @@ async def help(ctx):
                 inline=False
             )
     await ctx.send(embed=embed)
+
+@bot.command(name='help',help='ADMIN ONLY: accesses RCON')
+@commands.is_owner()
+async def sudo(ctx,command:str):
+    print(f"{ctx.author} ran: sudo {command}")
+    server = MinecraftServer(MC_DOMAIN, MC_PORT)
+    status = server.status()
+
+    try:
+        status = server.status()
+        with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
+            response = mcr.command(f"{command}")
+            ctx.send(response)
+    except:
+        print("Sudo failed: server offline")
+        ctx.send("Sudo failed: server offline")
+
+
 
 
 """
