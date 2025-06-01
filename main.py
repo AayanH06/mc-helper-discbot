@@ -91,6 +91,7 @@ async def server_status_task():
                         embed = discord.Embed(
                             title="Server Status",
                             description=f"{MC_DOMAIN} is now online!"
+                            color=discord.Color.green()
                         )
                         embed.set_footer(text="Use `mc!doDM` to toggle off.")
                         await user.send(embed=embed)
@@ -108,6 +109,7 @@ async def server_status_task():
                         embed = discord.Embed(
                             title="Server Status",
                             description=f"{MC_DOMAIN} is now offline."
+                            color=discord.Color.green()
                         )
                         embed.set_footer(text="Use `mc!doDM` to toggle off.")
                         await user.send(embed=embed)
@@ -153,12 +155,31 @@ async def auto_shutdown_check():
 @bot.command()
 async def info(ctx):
     server = MinecraftServer(MC_DOMAIN,25565)
+
+    image = discord.File("server-icon.png", filename = "server-icon.png")
+
     try:
         status = server.status()
-        embed = discord.Embed(title=f"{MC_DOMAIN}", color=discord.Color.green())
+        players = status.players.sample
+
+        embed = discord.Embed(title=f"{MC_DOMAIN}", 
+                              color=discord.Color.green()
+                              )
         embed.add_field(name="Version", value=status.version.name, inline=True)
         embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
+        embed.set_thumbnail(url="attachment://server-icon.png")
+
+        row = []
+        if players:
+           for i, player in enumerate(players, 1):
+               row.append(player.name)
+               if i % 3 == 0 or i == len(players):
+                   embed.add_field(name="u/u200b", value=" | ".join(row), inline=False)
+                   row = []
+        else:
+            embed.add_field(name="No players online", value="Invite your friends!", inline=False)
+
         await ctx.send(embed=embed)
     except:
         await ctx.send("Minecraft server is offline or unreachable. Trusted users may run `mc!start`")
