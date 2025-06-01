@@ -431,16 +431,15 @@ async def help(ctx):
 async def sudo(ctx,command:str):
     print(f"{ctx.author} ran: sudo {command}")
     server = MinecraftServer(MC_DOMAIN, MC_PORT)
-    status = server.status()
 
     try:
         status = server.status()
         with MCRcon(MC_DOMAIN, RCON_PASSWORD, port=RCON_PORT) as mcr:
             response = mcr.command(f"{command}")
-            ctx.send(response)
+            await ctx.send(response)
     except:
         print("Sudo failed: server offline")
-        ctx.send("Sudo failed: server offline")
+        await ctx.send("Sudo failed: server offline")
 
 
 
