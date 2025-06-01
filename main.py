@@ -138,10 +138,10 @@ async def server_status_task():
 
 async def auto_shutdown_check():
     global last_seen_active
-    server = MinecraftServer(MC_DOMAIN,25565)
 
     while True:
         try:
+            server = MinecraftServer(MC_DOMAIN,25565)
             status = server.status()
             player_count = status.players.online
 
