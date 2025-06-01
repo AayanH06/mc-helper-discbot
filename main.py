@@ -319,23 +319,25 @@ def load_startstop_file():
         return set()
 
 @bot.command()
-@commands.is_owner()
 async def doDM(ctx):
     print(f"{ctx.author} ran: doDM")
     user_id = ctx.author.id
+
     wants_startstop = load_startstop_file()
+    
     if user_id not in wants_startstop:
         wants_startstop.add(user_id)
-        with open(START_STOP, 'w') as f:
-            json.dump({"wants_dm": list(wants_startstop)}, f, indent=2)
-            print(f"{ctx.author} has been added to the DM-list.")
-            ctx.send("You have been added to the DM-list. Re-run command to toggle off.")
+        action = "added to"
+        response = "You have been added to the DM list. Re-run command to toggle off."
     else:
         wants_startstop.remove(user_id)
-        with open(START_STOP, 'w') as f:
-            json.dump({"wants_dm": list(wants_startstop)}, f, indent=2)
-            print(f"{ctx.author} has been added to the DM-list.")
-            ctx.send("You have been added to the DM-list. Re-run command to toggle off.")
+        action = "removed from"
+        response = "You have been removed from the DM list. Re-run command to toggle on."
+
+    with open(START_STOP, 'w') as f:
+        json.dump({"wants_dm": list(wants_startstop)}, f, indent=2)
+        print(f"{ctx.author} has been {action} the DM list.")
+        await ctx.send(response)
 
 
 """@bot.command()
