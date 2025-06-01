@@ -152,7 +152,7 @@ async def auto_shutdown_check():
 
         await asyncio.sleep(600)
 
-@bot.command()
+@bot.command(help='Fetches the MOTD, playercount, version, and thumbnail')
 async def info(ctx):
     print(f"{ctx.author} ran: info")
     server = MinecraftServer(MC_DOMAIN,25565)
@@ -211,7 +211,7 @@ def isInGuild(user_id: int, guild_id: int) -> bool:
 def isTrusted(ctx) -> bool:
     return isInGuild(ctx.author.id, TRUSTED_GUILD_ID) or ctx.author.id in load_trusted_users_file()
 
-@bot.command()
+@bot.command(help='Trusts a user to run commands such as `mc!start` or `mc!stop`. Removes admin verification of whitelist requests.')
 @commands.is_owner()
 async def trust(ctx, user: discord.User):
         print(f"{ctx.author} ran: trust")
@@ -224,7 +224,7 @@ async def trust(ctx, user: discord.User):
         else:
             await ctx.send(f"{user.name} is already a trusted user.")
 
-@bot.command()
+@bot.command(help='Untrusts a user from the above.')
 @commands.is_owner()
 async def untrust(ctx, user: discord.User):
     print(f"{ctx.author} ran: untrust")
@@ -237,7 +237,7 @@ async def untrust(ctx, user: discord.User):
     else:
         await ctx.send(f"{user.name} was not a trusted user.")
 
-@bot.command()
+@bot.command(help='Whitelists user, limited to one IGN per person.')
 async def whitelist(ctx, username: str = None):
     #add in 1 whitelist per user, store discord ID and IGN together
     print(f"{ctx.author} ran: whitelist")
@@ -311,7 +311,7 @@ async def on_raw_reaction_add(payload):
     finally:
         del pending_whitelist[payload.message_id]
 
-@bot.command()
+@bot.command(help='Fetches user ID')
 async def myid(ctx):
     print(f"{ctx.author} ran: myid")
     await ctx.send(f"Your Discord ID: `{ctx.author.id}`")
@@ -323,7 +323,7 @@ def is_pc_online(host: str, port: int, timeout=3) -> bool:
     except:
         return False
 
-@bot.command()
+@bot.command(help='Requests server start. Will return error if server PC is shut off.')
 async def start(ctx):
     
     if isTrusted(ctx):
@@ -361,7 +361,7 @@ async def start(ctx):
         print(f"{ctx.author} ran: start but is not authorized.") 
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
 
-@bot.command()
+@bot.command(help='Requests server stop.')
 async def stop(ctx):
     
     if isTrusted(ctx):    
@@ -387,7 +387,7 @@ def load_startstop_file():
     except FileNotFoundError:
         return set()
 
-@bot.command(aliases=["dodm","dm", "toggleDM", "notify"])
+@bot.command(aliases=["dodm","dm", "toggleDM", "notify"], help='Toggles DMs from bot regarding the server starting/stopping.')
 async def doDM(ctx):
     print(f"{ctx.author} ran: doDM")
     user_id = ctx.author.id
@@ -409,7 +409,7 @@ async def doDM(ctx):
         await ctx.send(response)
 
 
-@bot.command()
+@bot.command(help='List of commands.')
 async def help(ctx):
     embed = discord.Embed(
         title="Bot Commands",
