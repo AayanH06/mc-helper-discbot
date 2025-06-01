@@ -38,6 +38,7 @@ CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
 pending_whitelist = {}
 TRUSTED_USERS = "trusted_users.json"
+START_STOP = "wants_startstop_message.json"
 adminIDs = [BOT_OWNER_ID]
 
 server_was_online = False
@@ -306,6 +307,24 @@ async def stop(ctx):
             await ctx.send(f"{MC_DOMAIN} is already offline.")
     else:
         await ctx.send(f"You are not authorized to perform this command. Contact @{BOT_OWNER_USERNAME}")
+
+def load_startstop_file():
+    try:
+        with open(START_STOP, 'r') as start_stop:
+            data = json.load(start_stop)
+            return set(data.get("wants_startstop_message", []))
+    except FileNotFoundError:
+        return set()
+
+"""@bot.command()
+async def doDM(ctx):
+    user_id = ctx.author.id
+    wants_startstop = load_startstop_file()
+        if user_id not in wants_startstop:
+            wants_startstop.add(user.id)
+            with open(TRUSTED_USERS, 'w') as trusted_file:
+                json.dump({"trusted_users": list(trusted)}, trusted_file, indent=2)"""
+
 
 """@bot.command()
 async def help(ctx):
