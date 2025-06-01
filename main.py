@@ -90,7 +90,7 @@ async def server_status_task():
                         user = await bot.fetch_user(user_id)
                         embed = discord.Embed(
                             title="Server Status",
-                            description=f"{MC_DOMAIN} is now online!"
+                            description=f"{MC_DOMAIN} is now online!",
                             color=discord.Color.green()
                         )
                         embed.set_footer(text="Use `mc!doDM` to toggle off.")
