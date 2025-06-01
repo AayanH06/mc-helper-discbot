@@ -167,7 +167,7 @@ async def info(ctx):
                               color=discord.Color.green()
                               )
         embed.add_field(name="Version", value=status.version.name, inline=True)
-        embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
+        embed.add_field(name="Players:", value=f"{status.players.online}/{status.players.max}", inline=True)
         embed.add_field(name="MOTD", value=status.description, inline=False)
         embed.set_thumbnail(url="attachment://server-icon.png")
 
@@ -177,14 +177,20 @@ async def info(ctx):
                avatar_url = f"https://minotar.net/avatar/{player.name}/64"
                row.append(f"[{player.name}]({avatar_url})")
                if i % 3 == 0 or i == len(players):
-                   embed.add_field(name="\u200b", value=" | ".join(row), inline=False)
+                   embed.add_field(name="\u200bPlayers Connected:", value=" | ".join(row), inline=False)
                    row = []
         else:
             embed.add_field(name="No players online", value="Invite your friends!", inline=False)
 
         await ctx.send(embed=embed, file=image)
     except:
-        await ctx.send("Minecraft server is offline or unreachable. Trusted users may run `mc!start`")
+        embed = discord.Embed(title=f"{MC_DOMAIN}", 
+                            color=discord.Color.green()
+                            )
+        embed.add_field(name="\u200b", value="Run mc!start to start crafting!", inline=False)
+        embed.set_thumbnail(url="attachment://server-icon.png")
+
+        await ctx.send(embed=embed, file=image)
 #\u2705
 
 def load_trusted_users_file():
