@@ -185,7 +185,7 @@ async def info(ctx):
         await ctx.send(embed=embed, file=image)
     except:
         embed = discord.Embed(title=f"{MC_DOMAIN}", 
-                            color=discord.Color.green()
+                            color=discord.Color.red()
                             )
         embed.add_field(name="\u200b", value="Run mc!start to start crafting!", inline=False)
         embed.set_thumbnail(url="attachment://server-icon.png")
@@ -409,13 +409,21 @@ async def doDM(ctx):
         await ctx.send(response)
 
 
-"""@bot.command()
+@bot.command()
 async def help(ctx):
-        embed = discord.Embed(title="Commands", color=discord.Color.green())
-        embed.add_field(name="Version", value=status.version.name, inline=True)
-        embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=True)
-        embed.add_field(name="MOTD", value=status.description, inline=False)
-        await ctx.send(embed=embed)"""
+    embed = discord.Embed(
+        title="Bot Commands",
+        description="\u200b",
+        color=discord.Color.blurple()
+    )
+    for command in bot.commands:
+        if not command.hidden:
+            embed.add_field(
+                name=f"mc!{command.name}",
+                value=command.help or "No description.",
+                inline=False
+            )
+    await ctx.send(embed=embed)
 
 
 """
