@@ -426,7 +426,7 @@ async def help(ctx):
             )
     await ctx.send(embed=embed)
 
-@bot.command(name='help',help='ADMIN ONLY: accesses RCON')
+@bot.command(name='sudo',help='ADMIN ONLY: accesses RCON')
 @commands.is_owner()
 async def sudo(ctx,command:str):
     print(f"{ctx.author} ran: sudo {command}")
