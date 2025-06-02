@@ -190,11 +190,12 @@ async def info(ctx):
 
         row = []
         if players:
+           embed.add_field(name="Players Connected:", value="\u200b",inline=False)
            for i, player in enumerate(players, 1):
                avatar_url = f"https://minotar.net/avatar/{player.name}/64"
                row.append(f"[{player.name}]({avatar_url})")
                if i % 3 == 0 or i == len(players):
-                   embed.add_field(name="\u200bPlayers Connected:", value=" | ".join(row), inline=False)
+                   embed.add_field(name="\u200b", value=" | ".join(row), inline=False)
                    row = []
         else:
             embed.add_field(name="No players online", value="Invite your friends!", inline=False)
